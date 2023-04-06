@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "ES6",
+    "module": "commonjs",
+    "lib": ["es6"],
+    "outDir": "./dist",
+    "rootDir": ".",
+    "allowJs": false,
+    "removeComments": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./@types"
+    ],
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationDir": "dist",
+    "emitDeclarationOnly": false
+  },
+  "include": [
+    "src", "jest-preload.js",
+  ]
+}

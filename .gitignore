@@ -1,0 +1,5 @@
+node_modules/
+dist/
+coverage/lcov-report/
+coverage/coverage-summary.json
+coverage/lcov.info
