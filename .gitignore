@@ -3,3 +3,4 @@ dist/
 coverage/lcov-report/
 coverage/coverage-summary.json
 coverage/lcov.info
+*package-lock.json
