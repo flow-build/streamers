@@ -4,8 +4,8 @@ async function runBaseSample(){
     const stream = new StreamInterface({
         "topics":{
             "process-topic":{
-                "producesTo":["bullmq", "kafka",],
-                "consumesFrom":["bullmq", "kafka",],
+                "producesTo":["mqtt", "bullmq", "kafka"],
+                "consumesFrom":["mqtt", "bullmq", "kafka"],
             },
         },
         'kafka': {
@@ -20,23 +20,30 @@ async function runBaseSample(){
             'REDIS_PASSWORD': '',
             'REDIS_DB': 4,
         },
+        'mqtt': {
+            'MQTT_HOST': 'localhost',
+            'MQTT_PORT': '1883',
+            'MQTT_PROTOCOL': 'http',
+            'MQTT_USERNAME': 'admin',
+            'MQTT_PASSWORD': 'hivemq',
+        }
     },);
 
-    const consumerCallback = (topic: string, receivedMessage: string,) => {
-        console.log("** I'm a callback ",);
-        console.log({topic, receivedMessage,},);
+    const consumerCallback = (topic: string, receivedMessage: string) => {
+        console.log("** I'm a callback ");
+        console.log({topic, receivedMessage});
     };
 
-    await stream.connect(consumerCallback,);
+    await stream.connect(consumerCallback);
 
     await stream.produce(
         "process-topic", 
-        {"mensagem": "This is an test",},
+        {"mensagem": "This is an test"},
     );
 
     await stream.produce(
         "process-topic", 
-        {"mensagem": "This is another test",},
+        {"mensagem": "This is another test"},
     );
 }
 runBaseSample();

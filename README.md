@@ -12,6 +12,7 @@ It is necessary to have a Message Broker running in order to use the Stream Inte
 ```
 kafka
 bullmq
+mqtt
 ```
 
 ## Install:
@@ -43,6 +44,13 @@ The required configuration object has a structure similar to:
         "REDIS_PASSWORD": "",
         "REDIS_DB": 4,
     },
+    "mqtt": {
+        "MQTT_HOST": "localhost",
+        "MQTT_PORT": "1883",
+        "MQTT_PROTOCOL": "http",
+        "MQTT_USERNAME": "username",
+        "MQTT_PASSWORD": "password",
+    }
 }
 ```
 In *topics* you must put the name of the events and a relation of Consumption and Production listing the brokers that will be used.
@@ -55,8 +63,8 @@ For each broker you want to use, you must put the necessary configuration in the
 const stream = new StreamInterface({
     "topics":{
         "event-topic":{
-            "producesTo":["bullmq", "kafka",],
-            "consumesFrom":["bullmq", "kafka",],
+            "producesTo":["bullmq", "kafka", "mqtt"],
+            "consumesFrom":["bullmq", "kafka", "mqtt"],
         },
     },
     "kafka": {
@@ -71,20 +79,27 @@ const stream = new StreamInterface({
         "REDIS_PASSWORD": "",
         "REDIS_DB": 4,
     },
+    "mqtt": {
+        "MQTT_HOST": "localhost",
+        "MQTT_PORT": "1883",
+        "MQTT_PROTOCOL": "http",
+        "MQTT_USERNAME": "username",
+        "MQTT_PASSWORD": "password",
+    }
 },);
 
-const consumerCallback = (topic: string, receivedMessage: string,) => {
-    console.log({topic, receivedMessage,},);
+const consumerCallback = (topic: string, receivedMessage: string) => {
+    console.log({topic, receivedMessage});
 };
 
-await stream.connect(consumerCallback,);
+await stream.connect(consumerCallback);
 await stream.produce(
     "event-topic", 
-    {"mensagem": "This is an test",},
+    {"mensagem": "This is an test"},
 );
 
 await stream.produce(
     "event-topic", 
-    {"mensagem": "This is another test",},
+    {"mensagem": "This is another test"},
 );
 ```
