@@ -10,74 +10,73 @@ export class KafkaStream {
     _consumer: Consumer;
   
     constructor(configs: LooseObject, client: any = Kafka) {
-        console.log('>> Starting Kafka config ...',);
+        console.log('[Kafka CONFIG] Starting configuration ...');
         this._client = new client({
             clientId: `${configs.CLIENT_ID}-${uuid()}`,
-            brokers: [`${configs.BROKER_HOST}:${configs.BROKER_PORT}`,],
-        },);
-  
+            brokers: [`${configs.BROKER_HOST}:${configs.BROKER_PORT}`],
+        });
         this._producer = this._client.producer();
-        console.log('>> Kafka producer created ...',);
         this._consumer = this._client.consumer({
             groupId: `${configs.GROUP_CONSUMER_ID}-consumer-group`,
-        },);
-        console.log('>> Kafka consumer created ...',);
+        });
+        console.log('[Kafka CONFIG] configurated.');
     }
 
-    async connect(consumesFrom: Array<string>, producesTo: Array<string>, callback: any,){
+    async connect(consumesFrom: Array<string>, producesTo: Array<string>, callback: any){
         if (consumesFrom.length) {
-            console.log('[CONNECT] Kafka consumer connecting ...',);
+            console.log('[Kafka CONNECT] Consumer connecting ...');
             await this._consumer.connect();
-            console.log('[CONNECT] Kafka consumer connected ... setting consumers ...',);
-            await this.setConsumer(consumesFrom, callback,);
+            console.log('[Kafka CONNECT] Consumer connected ... setting consumers ...');
+            await this.setConsumer(consumesFrom, callback);
         }
         if (producesTo.length) {
-            console.log('[CONNECT] Kafka producer connecting ...',);
+            console.log('[Kafka CONNECT] Producer connecting ...');
             await this._producer.connect();
-            console.log('[CONNECT] Kafka producer connected',);
+            console.log('[Kafka CONNECT] Producer connected');
         }
     }
 
-    async setConsumer(consumesFrom: Array<string>, callback: any,){
+    async setConsumer(consumesFrom: Array<string>, callback: any){
         for (const topic of consumesFrom){
+            console.log(`[Kafka CONSUMER] Creating consumer for "${topic}" ...`);
             await this._consumer.subscribe({
                 topic: topic,
                 fromBeginning: true,
-            },);
-            console.log(`[CONSUMER] Kafka consumer for "${topic}" created ...`,);
+            });
+            console.log(`[Kafka CONSUMER] Consumer for "${topic}" created.`);
             await this._consumer.run({
                 eachMessage: this.mountConsumerCallback(callback,),
             },);
-            console.log(`[CONSUMER] Kafka consumer for "${topic}" running `,);
+            console.log(`[Kafka CONSUMER] Consumer for "${topic}" running. `);
         }
     }
 
-    async produce({ topic, message, }: { topic: string; message: LooseObject },){
-        console.log('[PRODUCE] Publishing message ... ', { topic, message, },);
+    async produce({ topic, message }: { topic: string; message: LooseObject }){
+        console.log('[Kafka PRODUCE] Publishing message ... ', { topic, message });
         try {
             await this._producer.send({
                 topic,
-                messages: [{ value: JSON.stringify(message,), },],
+                messages: [{ value: JSON.stringify(message) }],
             },);
-            console.log('[PRODUCE] Message published.',);
+            console.log('[Kafka PRODUCE] Message published.');
             return true;
         } catch (error) {
-            console.error('[PRODUCE] Error publishing message.', error,);
+            console.error('[Kafka PRODUCE] Error publishing message.', error);
             return false;
         }
     }
 
-    mountConsumerCallback(callback: any,){
-        return async ({ topic, partition, message, }: EachMessagePayload,): Promise<void> => {
+    mountConsumerCallback(callback: any){
+        return async ({ topic, partition, message, }: EachMessagePayload): Promise<void> => {
             const receivedMessage = message.value?.toString() || '';
-            console.log(`[CONSUMER] Message received (Kafka) -> ${JSON.stringify(
+            console.log(`[Kafka CONSUMER] Message received -> ${JSON.stringify(
                 {
                     partition,
                     offset: message.offset,
                     value: receivedMessage,
                 },
-            )}`,);
-            callback(topic, receivedMessage,);
+            )}`);
+            callback(topic, receivedMessage);
         };
     }
 }

@@ -1,8 +1,9 @@
 import { KafkaStream, } from './streams/kafka';
 import { BullmqStream, } from './streams/bullmq';
+import { MqttStream } from './streams/smqtt';
+import { RabbitMQStream } from './streams/rabbitmq';
 import { LooseObject, } from './types';
 import { Streamer } from './streamer';
-import { MqttStream } from './streams/mqtt';
 
 export class StreamInterface {
     private _configs: LooseObject;
@@ -10,6 +11,7 @@ export class StreamInterface {
         new Streamer('kafka', KafkaStream),
         new Streamer('bullmq', BullmqStream),
         new Streamer('mqtt', MqttStream),
+        new Streamer('rabbitmq', RabbitMQStream),
     ];
 
     constructor(configs: LooseObject) {

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
-import { MqttStream } from '../../streams/mqtt';
+import { MqttStream } from '../../streams/smqtt';
 
 class MqttMock {
     subscribe = jest.fn((topic) => {});
@@ -16,10 +16,6 @@ jest.mock("mqtt", () => {
 
 describe('Mqtt Stream suite test', () => {
     let stream: MqttStream;
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
 
     it('Check if base case is working', async () => {
         const consumerCallback = (topic: string, receivedMessage: string,) => {};

@@ -8,6 +8,7 @@ export class MqttStream {
     _client: any;
 
     constructor(configs: LooseObject) {
+        console.log('[Mqtt CONFIG] Starting configuration ...');
         this._configs = {
             hostname: configs.MQTT_HOST,
             port: configs.MQTT_PORT,
@@ -17,41 +18,42 @@ export class MqttStream {
             username: configs.MQTT_USERNAME,
             password: configs.MQTT_PASSWORD
         };
+        console.log('[Mqtt CONFIG] configurated.');
     }
 
     async connect(consumesFrom: Array<string>, producesTo: Array<string>, callback: any){
-        console.log('[CONNECT] Starting MQTT connection ...'); 
+        console.log('[Mqtt CONNECT] Starting connection ...'); 
         this._client = mqtt.connect(this._configs);
+        console.log('[Mqtt CONNECT] Connected.');
         this.setConsumer(consumesFrom, callback);
-        console.log('[CONNECT] MQTT connected ...');
     }
 
     async setConsumer(consumesFrom: Array<string>, callback: any){
         for (const topic of consumesFrom){
             await this._client.subscribe(topic);
-            console.log(`[CONSUMER] MQTT consumer for "${topic}" created and running`);
+            console.log(`[Mqtt CONSUMER] Consumer for "${topic}" created.`);
         }
         await this._client.on("message", this.mountConsumerCallback(callback));
     }
 
     async produce({ topic, message, }: { topic: string; message: LooseObject }){
-        console.log('[PRODUCE] Publishing message ... ', { topic, message });
+        console.log('[Mqtt PRODUCE] Publishing message ... ', { topic, message });
         try {
             await this._client.publish(
                 topic,
                 JSON.stringify(message),
             );
-            console.log('[PRODUCE] Message published.');
+            console.log('[Mqtt PRODUCE] Message published.');
             return true;
         } catch (error) {
-            console.error('[PRODUCE] Error publishing message.', error);
+            console.error('[Mqtt PRODUCE] Error publishing message.', error);
             return false;
         }
     }
 
     mountConsumerCallback(callback: any){
         return async (topicSent: any, messageSentBuffer: any) => {
-            console.log(`[CONSUMER] Message received (MQTT) ${topicSent} -> ${JSON.stringify(
+            console.log(`[Mqtt CONSUMER] Message received ${topicSent} -> ${JSON.stringify(
                 {
                     value: messageSentBuffer.toString('utf-8'),
                 },
