@@ -34,6 +34,16 @@ class MqttStreamMock {
     ) => {});
 }
 
+class RabbitMQStreamMock {
+    connect = jest.fn((
+        consumesFrom: Array<string>, 
+        producesTo: Array<string>, 
+        callback: any,) => {});
+    produce = jest.fn((
+        { topic, message, }: { topic: string; message: LooseObject }
+    ) => {});
+}
+
 describe('Stream Interface suite test', () => {
     let stream: StreamInterface;
 
@@ -46,8 +56,8 @@ describe('Stream Interface suite test', () => {
         stream = new StreamInterface({
             "topics":{
                 "process-topic":{
-                    "producesTo":["bullmq", "kafka", 'mqtt'],
-                    "consumesFrom":["bullmq", "kafka", 'mqtt'],
+                    "producesTo":["bullmq", "kafka", 'mqtt', "rabbitmq"],
+                    "consumesFrom":["bullmq", "kafka", 'mqtt', "rabbitmq"],
                 },
             },
             'kafka': {
@@ -68,12 +78,19 @@ describe('Stream Interface suite test', () => {
                 'MQTT_PROTOCOL': 'http',
                 'MQTT_USERNAME': 'admin',
                 'MQTT_PASSWORD': 'hivemq',
+            },
+            'rabbitmq': {
+                'RABBITMQ_HOST': 'localhost:5672',
+                'RABBITMQ_USERNAME': 'user',
+                'RABBITMQ_PASSWORD': 'password',
+                'RABBITMQ_QUEUE': 'flowbuild'
             }
-        },);
+        });
         stream.streams = [
             new Streamer('kafka', KafkaStreamMock),
             new Streamer('bullmq', BullmqStreamMock),
             new Streamer('mqtt', MqttStreamMock),
+            new Streamer('rabbitmq', RabbitMQStreamMock),
         ];
         const consumerCallback = (topic: string, receivedMessage: string) => {};
         await stream.connect(consumerCallback);

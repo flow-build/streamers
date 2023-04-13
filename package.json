@@ -17,6 +17,8 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@types/amqplib": "^0.10.1",
+        "amqplib": "^0.10.3",
         "bullmq": "^3.10.1",
         "kafkajs": "^2.2.3",
         "mqtt": "^4.3.7",
@@ -24,6 +26,7 @@
     },
     "devDependencies": {
         "@types/jest": "^29.4.0",
+        "@types/node": "^18.15.11",
         "@types/uuid": "^9.0.0",
         "@typescript-eslint/eslint-plugin": "^5.51.0",
         "@typescript-eslint/parser": "^5.51.0",

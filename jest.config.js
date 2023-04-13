@@ -2,6 +2,7 @@ module.exports = {
     preset: 'ts-jest',
     moduleFileExtensions: ['js', 'ts'],
     moduleDirectories: ['node_modules', 'src'],
+    modulePathIgnorePatterns: ["dist/"],
     transform: {
         '^.+\\.(ts|tsx)?$': 'ts-jest',
     },
@@ -15,7 +16,8 @@ module.exports = {
         'interfaces',
         'jestGlobalMocks.ts',
         '.mock.ts',
-        'sample.ts'
+        'sample.ts',
+        'dist'
     ],
     coverageReporters: [
         "json-summary", 

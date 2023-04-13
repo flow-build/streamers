@@ -1,7 +1,10 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
-import { JobsOptions, Queue } from 'bullmq';
+import { Queue } from 'bullmq';
 import { BullmqStream } from '../../streams/bullmq';
+
+class WorkerMock{}
+class QueueMock{}
 
 describe('Bullmq Stream suite test', () => {
     let stream: BullmqStream;
@@ -15,6 +18,8 @@ describe('Bullmq Stream suite test', () => {
             'REDIS_PASSWORD': '',
             'REDIS_DB': 4,
         });
+        stream.createWorker = jest.fn().mockReturnValue(new WorkerMock());
+        stream.createQueue = jest.fn().mockReturnValue(new QueueMock());
         await stream.connect(
             ["process-topic"], 
             ["process-topic"], 

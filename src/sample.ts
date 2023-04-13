@@ -4,8 +4,8 @@ async function runBaseSample(){
     const stream = new StreamInterface({
         "topics":{
             "process-topic":{
-                "producesTo":["mqtt", "bullmq", "kafka"],
-                "consumesFrom":["mqtt", "bullmq", "kafka"],
+                "producesTo":["kafka", "bullmq", "mqtt", "rabbitmq"],
+                "consumesFrom":["kafka", "bullmq", "mqtt", "rabbitmq"],
             },
         },
         'kafka': {
@@ -26,6 +26,12 @@ async function runBaseSample(){
             'MQTT_PROTOCOL': 'http',
             'MQTT_USERNAME': 'admin',
             'MQTT_PASSWORD': 'hivemq',
+        },
+        'rabbitmq': {
+            'RABBITMQ_HOST': 'localhost:5672',
+            'RABBITMQ_USERNAME': 'user',
+            'RABBITMQ_PASSWORD': 'password',
+            'RABBITMQ_QUEUE': 'flowbuild'
         }
     },);
 
