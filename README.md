@@ -13,6 +13,7 @@ It is necessary to have a Message Broker running in order to use the Stream Inte
 kafka
 bullmq
 mqtt
+rabbitmq
 ```
 
 ## Install:
@@ -28,8 +29,8 @@ The required configuration object has a structure similar to:
 {
     "topics":{
         "event-topic":{
-            "producesTo":["bullmq", "kafka",],
-            "consumesFrom":["bullmq", "kafka",],
+            "producesTo":["bullmq", "kafka", "mqtt", "rabbitmq"],
+            "consumesFrom":["bullmq", "kafka", "mqtt", "rabbitmq"],
         },
     },
     "kafka": {
@@ -50,6 +51,12 @@ The required configuration object has a structure similar to:
         "MQTT_PROTOCOL": "http",
         "MQTT_USERNAME": "username",
         "MQTT_PASSWORD": "password",
+    },
+    "rabbitmq": {
+        "RABBITMQ_HOST": "localhost:5672",
+        "RABBITMQ_USERNAME": "user",
+        "RABBITMQ_PASSWORD": "password",
+        "RABBITMQ_QUEUE": "flowbuild"
     }
 }
 ```
@@ -63,8 +70,8 @@ For each broker you want to use, you must put the necessary configuration in the
 const stream = new StreamInterface({
     "topics":{
         "event-topic":{
-            "producesTo":["bullmq", "kafka", "mqtt"],
-            "consumesFrom":["bullmq", "kafka", "mqtt"],
+            "producesTo":["bullmq", "kafka", "mqtt", "rabbitmq"],
+            "consumesFrom":["bullmq", "kafka", "mqtt", "rabbitmq"],
         },
     },
     "kafka": {
@@ -85,8 +92,14 @@ const stream = new StreamInterface({
         "MQTT_PROTOCOL": "http",
         "MQTT_USERNAME": "username",
         "MQTT_PASSWORD": "password",
+    },
+    "rabbitmq": {
+        "RABBITMQ_HOST": "localhost:5672",
+        "RABBITMQ_USERNAME": "user",
+        "RABBITMQ_PASSWORD": "password",
+        "RABBITMQ_QUEUE": "flowbuild"
     }
-},);
+});
 
 const consumerCallback = (topic: string, receivedMessage: string) => {
     console.log({topic, receivedMessage});

@@ -20,14 +20,18 @@ export class StreamInterface {
 
     async connect(callback?: any) {
         this.streams.forEach((stream) => {
-            stream.configs = this._configs[stream.name];
-            for (const [topic, tconfig] of Object.entries(this._configs.topics) as unknown as any) {
-                if (tconfig.consumesFrom.includes(stream.name)) {
-                    stream.topics.consumesFrom.push(topic);
+            if (stream.name in this._configs){
+                stream.configs = this._configs[stream.name];
+                for (const [topic, tconfig] of Object.entries(this._configs.topics) as unknown as any) {
+                    if (tconfig.consumesFrom.includes(stream.name)) {
+                        stream.topics.consumesFrom.push(topic);
+                    }
+                    if (tconfig.producesTo.includes(stream.name)) {
+                        stream.topics.producesTo.push(topic);
+                    }
                 }
-                if (tconfig.producesTo.includes(stream.name)) {
-                    stream.topics.producesTo.push(topic);
-                }
+            } else {
+                stream.configs = {};
             }
         });
         for await (const stream of this.streams) {
@@ -49,8 +53,10 @@ export class StreamInterface {
     async produce(topic: string, message: LooseObject) {
         for await (const stream of this.streams) {
             try {
-                if (stream.topics.producesTo.includes(topic)) {
-                    await stream.stream.produce({ topic, message });
+                if(stream.configs){
+                    if (stream.topics.producesTo.includes(topic)) {
+                        await stream.stream.produce({ topic, message });
+                    }
                 }
             } catch (error) {
                 console.error('[PRODUCE] Error publishing message.', error);

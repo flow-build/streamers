@@ -1,4 +1,4 @@
-import { Consumer, Kafka, Producer, } from 'kafkajs';
+import { Consumer, Kafka, Producer, SASLOptions, KafkaConfig} from 'kafkajs';
 import { LooseObject, } from '../types';
 import { v4 as uuid, } from 'uuid';
 import { EachMessagePayload, } from 'kafkajs';
@@ -11,10 +11,21 @@ export class KafkaStream {
   
     constructor(configs: LooseObject, client: any = Kafka) {
         console.log('[Kafka CONFIG] Starting configuration ...');
-        this._client = new client({
+        const connectionConfig: KafkaConfig = {
             clientId: `${configs.CLIENT_ID}-${uuid()}`,
             brokers: [`${configs.BROKER_HOST}:${configs.BROKER_PORT}`],
-        });
+        };
+        if (configs.BROKER_KAFKA_MECHANISM && configs.BROKER_KAFKA_USERNAME && configs.BROKER_KAFKA_SECRET) {
+            const sasl: SASLOptions = {
+                mechanism: configs.mechanism,
+                username: configs.username,
+                password: configs.pswd,
+            }; 
+            connectionConfig.sasl = sasl;
+            connectionConfig.ssl = !!sasl;
+        }
+        this._client = new client(connectionConfig);
+
         this._producer = this._client.producer();
         this._consumer = this._client.consumer({
             groupId: `${configs.GROUP_CONSUMER_ID}-consumer-group`,
