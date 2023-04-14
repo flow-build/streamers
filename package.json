@@ -1,6 +1,6 @@
 {
     "name": "@flowbuild/streamers",
-    "version": "0.0.5",
+    "version": "0.0.7",
     "description": "This library provides functionality for writing and consuming events across multiple brokers.",
     "main": "dist/src/index.js",
     "directories": {

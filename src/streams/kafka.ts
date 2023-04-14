@@ -49,17 +49,17 @@ export class KafkaStream {
 
     async setConsumer(consumesFrom: Array<string>, callback: any){
         for (const topic of consumesFrom){
-            console.log(`[Kafka CONSUMER] Creating consumer for "${topic}" ...`);
+            console.log(`[Kafka CONSUMER] Subscribing consumer for "${topic}" ...`);
             await this._consumer.subscribe({
                 topic: topic,
                 fromBeginning: true,
             });
-            console.log(`[Kafka CONSUMER] Consumer for "${topic}" created.`);
-            await this._consumer.run({
-                eachMessage: this.mountConsumerCallback(callback,),
-            },);
-            console.log(`[Kafka CONSUMER] Consumer for "${topic}" running. `);
+            console.log(`[Kafka CONSUMER] Consumer subscribed for "${topic}".`);
         }
+        await this._consumer.run({
+            eachMessage: this.mountConsumerCallback(callback),
+        });
+        console.log(`[Kafka CONSUMER] Consumer running. `);
     }
 
     async produce({ topic, message }: { topic: string; message: LooseObject }){
