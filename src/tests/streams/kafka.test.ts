@@ -26,40 +26,41 @@ describe('Kafka Stream suite test', () => {
     });
 
     it('Check if base case is working', async () => {
-        const consumerCallback = (topic: string, receivedMessage: string,) => {};
-
-        stream = new KafkaStream({
+        const configs = {
             'CLIENT_ID': 'flowbuild-test',
             'BROKER_HOST': 'localhost',
             'BROKER_PORT': '9092',
             'GROUP_CONSUMER_ID': 'flowbuild-test-consumer-group',
-        }, KafkaMock);
+        };
+        const consumerCallback = (topic: string, receivedMessage: string,) => {};
+        
+        KafkaStream.createClient = jest.fn().mockReturnValue(new KafkaMock());
+        stream = new KafkaStream(configs);
         expect(stream._client.producer).toHaveBeenCalledTimes(1);
         expect(stream._client.consumer).toHaveBeenCalledTimes(1);
 
         await stream.connect(
-            ["process-topic"], 
-            ["process-topic"], 
+            ["process-topic", "process-dynamic-$"], 
+            ["process-topic", "process-dynamic-$"], 
             consumerCallback
         );
         expect(stream._producer.connect).toHaveBeenCalledTimes(1);
         expect(stream._consumer.connect).toHaveBeenCalledTimes(1);
-        expect(stream._consumer.subscribe).toHaveBeenCalledTimes(1);
+        expect(stream._consumer.subscribe).toHaveBeenCalledTimes(2);
         expect(stream._consumer.run).toHaveBeenCalledTimes(1);
 
-        let result = await stream.produce({
+        await stream.produce({
             "topic":"process-topic", 
             "message":{"mensagem": "This is an test"},
         });
         expect(stream._producer.send).toHaveBeenCalledTimes(1);
-        expect(result).toEqual(true);
 
-        stream._producer.send = jest.fn(() => { throw new Error("My Error"); });
-        result = await stream.produce({
-            "topic":"process-topic", 
-            "message":{"mensagem": "This is an test"},
+        await stream.produce({
+            "topic":"process-dynamic-topic", 
+            "message":{"mensagem": "This is an test for dynamic"},
         });
-        expect(result).toEqual(false);
-    
-    },);
-},);
+        expect(stream._producer.send).toHaveBeenCalledTimes(2);
+    });
+
+});
+

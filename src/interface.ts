@@ -19,53 +19,17 @@ export class StreamInterface {
     }
 
     async connect(callback?: any) {
-        this.streams.forEach((stream) => {
+        for await (const stream of this.streams) {
             if (stream.name in this._configs){
-                stream.configs = this._configs[stream.name];
-                for (const [topic, tconfig] of Object.entries(this._configs.topics) as unknown as any) {
-                    if(tconfig.consumesFrom){
-                        if (tconfig.consumesFrom.includes(stream.name)) {
-                            stream.topics.consumesFrom.push(topic);
-                        }
-                    }
-                    if(tconfig.producesTo){
-                        if (tconfig.producesTo.includes(stream.name)) {
-                            stream.topics.producesTo.push(topic);
-                        }
-                    }
-                }
-            } else {
-                stream.configs = {};
-            }
-        });
-        for await (const stream of this.streams) {
-            try {
-                if (stream.topics?.consumesFrom.length || stream.topics?.producesTo.length) {
-                    stream.stream = new stream.streamClass(stream.configs);
-                    await stream.stream.connect(
-                        stream.topics?.consumesFrom,
-                        stream.topics?.producesTo,
-                        callback,
-                    );
-                }
-            } catch (error) {
-                console.error(`[CONNECT] Error connect to ${stream.stream}.`, error);
+                stream.mountTopics(this._configs.topics);
+                await stream.startStream(this._configs[stream.name], callback);
             }
         }
     }
 
-    async produce(topic: string, message: LooseObject) {
+    async produce(topic: string, message: LooseObject, options={}) {
         for await (const stream of this.streams) {
-            try {
-                if(stream.configs){
-                    if (stream.topics.producesTo.includes(topic)) {
-                        await stream.stream.produce({ topic, message });
-                    }
-                }
-            } catch (error) {
-                console.error('[PRODUCE] Error publishing message.', error);
-            }
+            await stream.produce({ topic, message, options });
         }
     }
-
 }

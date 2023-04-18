@@ -47,15 +47,15 @@ class RabbitMQStreamMock {
 describe('Stream Interface suite test', () => {
     let stream: StreamInterface;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         jest.clearAllMocks();
-    });
-
-    it('Check if base case is working', async () => {
-
         stream = new StreamInterface({
             "topics":{
                 "process-topic":{
+                    "producesTo":["bullmq", "kafka", 'mqtt', "rabbitmq"],
+                    "consumesFrom":["bullmq", "kafka", 'mqtt', "rabbitmq"],
+                },
+                "process-dynamic-$":{
                     "producesTo":["bullmq", "kafka", 'mqtt', "rabbitmq"],
                     "consumesFrom":["bullmq", "kafka", 'mqtt', "rabbitmq"],
                 },
@@ -96,25 +96,62 @@ describe('Stream Interface suite test', () => {
         await stream.connect(consumerCallback);
         for await (const strm of stream.streams) {
             expect(strm.topics.producesTo).toEqual(["process-topic"]);
-            expect(strm.topics.consumesFrom).toEqual(["process-topic"]);
-            expect(strm.stream.connect).toHaveBeenNthCalledWith(1,
-                ["process-topic"], 
+            expect(strm.topics.producesToDynamic).toEqual([/process-dynamic-.*/]);
+            expect(strm.topics.consumesFrom).toEqual(["process-topic", "process-dynamic-$"]);
+            expect(strm.broker.connect).toHaveBeenNthCalledWith(1,
+                ["process-topic", "process-dynamic-$"], 
                 ["process-topic"], 
                 consumerCallback
             );
         }
-    
+    });
+
+    it('Check if base case is working', async () => {
         await stream.produce(
             "process-topic", 
             {"mensagem": "This is an test"},
         );
         for await (const strm of stream.streams) {
-            expect(strm.stream.produce).toHaveBeenNthCalledWith(1,
+            expect(strm.broker.produce).toHaveBeenLastCalledWith(
                 {
                     "message": {"mensagem": "This is an test"}, 
-                    "topic": "process-topic"
+                    "topic": "process-topic",
+                    "options": {}
                 }
             );
         }
-    },);
-},);
+    });
+
+    it('Check if case with options is working', async () => {
+        await stream.produce(
+            "process-topic", 
+            {"mensagem": "This is an test with options"},
+            {"delay": 5000}
+        );
+        for await (const strm of stream.streams) {
+            expect(strm.broker.produce).toHaveBeenLastCalledWith(
+                {
+                    "message": {"mensagem": "This is an test with options"}, 
+                    "topic": "process-topic",
+                    "options": {"delay": 5000}
+                }
+            );
+        }
+    });
+
+    it('Check if case with dynamic topics is working', async () => {
+        await stream.produce(
+            "process-dynamic-topic", 
+            {"mensagem": "This is an test for dynamic topics"}
+        );
+        for await (const strm of stream.streams) {
+            expect(strm.broker.produce).toHaveBeenLastCalledWith(
+                {
+                    "message": {"mensagem": "This is an test for dynamic topics"}, 
+                    "topic": "process-dynamic-topic",
+                    "options": {}
+                }
+            );
+        }
+    });
+});

@@ -1,4 +1,4 @@
-import { LooseObject } from '../types';
+import { LooseObject, ProduceParam } from '../types';
 import * as amqplib from "amqplib";
 
 export class RabbitMQStream {
@@ -41,8 +41,14 @@ export class RabbitMQStream {
         }
     }
 
-    async produce({ topic, message, }: { topic: string; message: LooseObject }){
+    async produce({ topic, message, options }: ProduceParam){
         console.log('[RabbitMQ PRODUCE] Publishing message ... ', { topic, message });
+        if (!options) {
+            options = {};
+        }
+        if(options?.delay){
+            await setTimeout(options?.delay);
+        }
         try {
             const channelCreated = await this.createChannel(topic);
             await channelCreated.sendToQueue(
@@ -56,6 +62,10 @@ export class RabbitMQStream {
             console.error('[RabbitMQ PRODUCE] Error publishing message.', error);
             return false;
         }
+    }
+
+    async addConsumer(topic: string){
+        console.log(`[Mqtt CONSUMER] Adding new consumer to ${topic} ... `);
     }
 
     mountConsumerCallback(topic: string, channel:any, callback: any){

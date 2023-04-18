@@ -1,4 +1,4 @@
-import { LooseObject, } from '../types';
+import { LooseObject, ProduceParam, } from '../types';
 import { v4 as uuid, } from 'uuid';
 import * as mqtt from "mqtt";
 
@@ -36,8 +36,14 @@ export class MqttStream {
         await this._client.on("message", this.mountConsumerCallback(callback));
     }
 
-    async produce({ topic, message, }: { topic: string; message: LooseObject }){
+    async produce({ topic, message, options }: ProduceParam){
         console.log('[Mqtt PRODUCE] Publishing message ... ', { topic, message });
+        if (!options) {
+            options = {};
+        }
+        if(options?.delay){
+            await setTimeout(options?.delay);
+        }
         try {
             await this._client.publish(
                 topic,
@@ -49,6 +55,10 @@ export class MqttStream {
             console.error('[Mqtt PRODUCE] Error publishing message.', error);
             return false;
         }
+    }
+
+    async addConsumer(topic: string){
+        console.log(`[Mqtt CONSUMER] Adding new consumer to ${topic} ... `);
     }
 
     mountConsumerCallback(callback: any){

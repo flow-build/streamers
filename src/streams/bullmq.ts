@@ -1,5 +1,5 @@
-import { Job, Queue, Worker, } from 'bullmq';
-import { LooseObject, } from '../types';
+import { Job, JobsOptions, Queue, Worker, } from 'bullmq';
+import { LooseObject, ProduceParam, } from '../types';
 
 
 export class BullmqStream {
@@ -51,23 +51,27 @@ export class BullmqStream {
         }
     }
 
-    async produce({ topic, message }: { topic: string; message: LooseObject }){
+    async produce({ topic, message, options }: ProduceParam){
         console.log('[Bullmq PRODUCE] Publishing message ... ', { topic, message });
         const queue = this._flowbuildQueues[topic];
+        const queueConfig: JobsOptions = {
+            removeOnComplete: true, 
+            removeOnFail: false,
+            attempts: 3,
+            backoff: {
+                type: 'exponential',
+                delay: 1000,
+            },
+        };
+        if(options?.delay){
+            queueConfig["delay"] = options.delay;
+        }
         if (queue) {
             try {
                 await queue.add(
                     topic, 
-                    JSON.stringify(message,), 
-                    {
-                        removeOnComplete: true, 
-                        removeOnFail: false,
-                        attempts: 3,
-                        backoff: {
-                            type: 'exponential',
-                            delay: 1000,
-                        },
-                    },
+                    JSON.stringify(message), 
+                    queueConfig,
                 );
                 console.log('[Bullmq PRODUCE] Message published.');
                 return true;
