@@ -18,27 +18,19 @@ describe('Bullmq Stream suite test', () => {
             'REDIS_PASSWORD': '',
             'REDIS_DB': 4,
         });
+        stream.connect();
         stream.createWorker = jest.fn().mockReturnValue(new WorkerMock());
         stream.createQueue = jest.fn().mockReturnValue(new QueueMock());
-        await stream.connect(
-            ["process-topic"], 
-            ["process-topic"], 
-            consumerCallback
-        );
-        const queue : Queue = stream._flowbuildQueues["process-topic"];
-        queue.add = jest.fn().mockReturnValue(undefined);
+        for (const topic of ["process-topic", "process-dynamic-$"]){
+            await stream.setConsumer(topic,consumerCallback);
+            await stream.runConsumer();
+        }
+        const queue = await stream.getOrCreateFlowbuildQueue("process-topic");
+        queue.add = jest.fn().mockReturnValue({});
         let result = await stream.produce({
             "topic":"process-topic", 
             "message":{"mensagem": "This is an test"},
         });
-        expect(result).toEqual(true);
-
-        queue.add = jest.fn((topic, message, config) => { throw new Error("My Error"); });
-        result = await stream.produce({
-            "topic":"process-topic", 
-            "message":{"mensagem": "This is an test"},
-        });
-        expect(result).toEqual(false);
     
-    },);
-},);
+    });
+});

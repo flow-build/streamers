@@ -8,15 +8,15 @@ async function runBaseSample(){
                 "consumesFrom":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
             },
             "process-topic-second":{
-                "producesTo":["kafka", 'bullmq'],
-                "consumesFrom":["kafka", 'bullmq'],
+                "producesTo":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
+                "consumesFrom":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
             },
             "trigger_event_$":{
-                "producesTo":["kafka"],
-                "consumesFrom":["kafka"],
+                "producesTo":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
+                "consumesFrom":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
             },
             "trigger_event_xpto":{
-                "consumesFrom":["kafka"],
+                "consumesFrom":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
             },
         },
         'kafka': {
@@ -44,7 +44,7 @@ async function runBaseSample(){
             'RABBITMQ_PASSWORD': 'password',
             'RABBITMQ_QUEUE': 'flowbuild'
         }
-    },);
+    });
 
     const consumerCallback = (topic: string, receivedMessage: string) => {
         console.log("** I'm a callback ");
@@ -69,7 +69,8 @@ async function runBaseSample(){
         {"delay": 5000}
     );
 
-    /*await stream.produce(
+    /*
+    await stream.produce(
         "process-states-topic", 
         {
             "actor_id": "093eaeaa-daea-11ed-afa1-0242ac120002",
@@ -87,9 +88,9 @@ async function runBaseSample(){
             },
             "visibility":["common"]            
         },
-    );*/
+    );
 
-    /*await stream.produce(
+    await stream.produce(
         "orchestrator-start-process-topic", 
         {
             "actor": {
@@ -102,7 +103,7 @@ async function runBaseSample(){
             },
             "process_id":"25513520-bd31-4d58-9f15-b33d3fdc1ee9",           
         },
-    );*/
+    );
 
     await stream.produce("orchestrator-result-topic",
         {
@@ -119,7 +120,7 @@ async function runBaseSample(){
         }
     );
     
-    /*await stream.produce("trigger-resolver-topic",{});
+    await stream.produce("trigger-resolver-topic",{});
     await stream.produce("start-nodes-topic",{});
     await stream.produce("finish-nodes-topic",{});
     await stream.produce("http-nodes-topic",{});

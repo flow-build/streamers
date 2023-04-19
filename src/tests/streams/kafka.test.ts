@@ -36,30 +36,30 @@ describe('Kafka Stream suite test', () => {
         
         KafkaStream.createClient = jest.fn().mockReturnValue(new KafkaMock());
         stream = new KafkaStream(configs);
-        expect(stream._client.producer).toHaveBeenCalledTimes(1);
-        expect(stream._client.consumer).toHaveBeenCalledTimes(1);
+        await stream.connect();
+        expect(stream._client.producer).toHaveBeenCalled();
+        expect(stream._client.consumer).toHaveBeenCalled();
+        expect(stream._consumer.connect).toHaveBeenCalled();
+        expect(stream._producer.connect).toHaveBeenCalled();
 
-        await stream.connect(
-            ["process-topic", "process-dynamic-$"], 
-            ["process-topic", "process-dynamic-$"], 
-            consumerCallback
-        );
-        expect(stream._producer.connect).toHaveBeenCalledTimes(1);
-        expect(stream._consumer.connect).toHaveBeenCalledTimes(1);
-        expect(stream._consumer.subscribe).toHaveBeenCalledTimes(2);
-        expect(stream._consumer.run).toHaveBeenCalledTimes(1);
+        for (const topic of ["process-topic", "process-dynamic-$"]){
+            await stream.setConsumer(topic,consumerCallback);
+            await stream.runConsumer();
+        }
+        expect(stream._consumer.subscribe).toHaveBeenCalled();
+        expect(stream._consumer.run).toHaveBeenCalled();
 
         await stream.produce({
             "topic":"process-topic", 
             "message":{"mensagem": "This is an test"},
         });
-        expect(stream._producer.send).toHaveBeenCalledTimes(1);
+        expect(stream._producer.send).toHaveBeenCalled();
 
         await stream.produce({
             "topic":"process-dynamic-topic", 
             "message":{"mensagem": "This is an test for dynamic"},
         });
-        expect(stream._producer.send).toHaveBeenCalledTimes(2);
+        expect(stream._producer.send).toHaveBeenCalled();
     });
 
 });

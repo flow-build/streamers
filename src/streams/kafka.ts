@@ -11,13 +11,16 @@ export class KafkaStream {
     _callback: any;
   
     constructor(configs: LooseObject) {
-        console.log('[Kafka CONFIG] Starting configuration ...');
         this._client = KafkaStream.createClient(configs);
         this._producer = this._client.producer();
         this._consumer = this._client.consumer({
             groupId: `${configs.GROUP_CONSUMER_ID}-consumer-group`,
         });
-        console.log('[Kafka CONFIG] configurated.');
+    }
+
+    async connect(){
+        await this._consumer.connect();
+        await this._producer.connect();
     }
 
     static createClient(configs: LooseObject){
@@ -37,57 +40,34 @@ export class KafkaStream {
         return new Kafka(connectionConfig);
     }
 
-    async connect(consumesFrom: Array<string>, producesTo: Array<string>, callback: any){
-        if (consumesFrom.length) {
-            console.log('[Kafka CONNECT] Consumer connecting ...');
-            await this._consumer.connect();
-            console.log('[Kafka CONNECT] Consumer connected ... setting consumers ...');
-            await this.setConsumer(consumesFrom);
-            this._callback = this.mountConsumerCallback(callback);
-            await this.runConsumer();
+    async setConsumer(topic: string, callback: any, dynamicKey = "$"){
+        this._callback = callback;
+        let cleanTopic: string | RegExp = topic;
+        if(topic.indexOf(dynamicKey)!=-1) {
+            cleanTopic = new RegExp(topic.replace(dynamicKey, ".*"));
         }
-        if (producesTo.length) {
-            console.log('[Kafka CONNECT] Producer connecting ...');
-            await this._producer.connect();
-            console.log('[Kafka CONNECT] Producer connected');
-        }
-    }
-
-    async setConsumer(consumesFrom: Array<string>){
-        for (const topic of consumesFrom){
-            console.log(`[Kafka CONSUMER] Subscribing consumer for "${topic}" ...`);
-            // Consume Dynamic Topics
-            let cleanTopic: string | RegExp = topic;
-            if(topic.indexOf("$")!=-1) {
-                cleanTopic = new RegExp(topic.replace("$", ".*"));
-            }
-            await this._consumer.subscribe({
-                topic: cleanTopic,
-                fromBeginning: true,
-            });
-            console.log(`[Kafka CONSUMER] Consumer subscribed for "${topic}".`);
-        }
+        await this._consumer.subscribe({
+            topic: cleanTopic,
+            fromBeginning: true,
+        });
     }
 
     async runConsumer(){
         await this._consumer.run({
-            eachMessage: this._callback,
+            eachMessage: this.mountConsumerCallback(this._callback),
         });
-        console.log(`[Kafka CONSUMER] Consumer running. `);
     }
 
-    async produce({ topic, message, options }: ProduceParam){
-        if(options?.delay){
-            await setTimeout(options?.delay);
-        }
-        await this._producer.send({
+    async produce({ topic, message }: ProduceParam){
+        const sendParams = {
             topic,
             messages: [{ value: JSON.stringify(message) }],
-        });
+        };
+        await this._producer.send(sendParams);
     }
 
     mountConsumerCallback(callback: any){
-        return async ({ topic, partition, message, }: EachMessagePayload): Promise<void> => {
+        return async ({ topic, partition, message }: EachMessagePayload): Promise<void> => {
             const receivedMessage = message.value?.toString() || '';
             console.log(`[Kafka CONSUMER] Message received -> ${JSON.stringify(
                 {

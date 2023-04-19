@@ -49,7 +49,13 @@ describe('Stream Interface suite test', () => {
 
     beforeEach(async () => {
         jest.clearAllMocks();
-        stream = new StreamInterface({
+        StreamInterface.mountStreamers = jest.fn().mockReturnValue([
+            new Streamer('kafka', KafkaStreamMock),
+            new Streamer('bullmq', BullmqStreamMock),
+            new Streamer('mqtt', MqttStreamMock),
+            new Streamer('rabbitmq', RabbitMQStreamMock),
+        ]);
+        const STREAM_CONFIG = {
             "topics":{
                 "process-topic":{
                     "producesTo":["bullmq", "kafka", 'mqtt', "rabbitmq"],
@@ -85,24 +91,15 @@ describe('Stream Interface suite test', () => {
                 'RABBITMQ_PASSWORD': 'password',
                 'RABBITMQ_QUEUE': 'flowbuild'
             }
-        });
-        stream.streams = [
-            new Streamer('kafka', KafkaStreamMock),
-            new Streamer('bullmq', BullmqStreamMock),
-            new Streamer('mqtt', MqttStreamMock),
-            new Streamer('rabbitmq', RabbitMQStreamMock),
-        ];
+        };
+        stream = new StreamInterface(STREAM_CONFIG);
         const consumerCallback = (topic: string, receivedMessage: string) => {};
         await stream.connect(consumerCallback);
         for await (const strm of stream.streams) {
             expect(strm.topics.producesTo).toEqual(["process-topic"]);
             expect(strm.topics.producesToDynamic).toEqual([/process-dynamic-.*/]);
             expect(strm.topics.consumesFrom).toEqual(["process-topic", "process-dynamic-$"]);
-            expect(strm.broker.connect).toHaveBeenNthCalledWith(1,
-                ["process-topic", "process-dynamic-$"], 
-                ["process-topic"], 
-                consumerCallback
-            );
+            expect(strm.broker.connect).toHaveBeenCalledWith();
         }
     });
 
