@@ -26,27 +26,25 @@ describe('Mqtt Stream suite test', () => {
             'MQTT_USERNAME': 'admin',
             'MQTT_PASSWORD': 'hivemq',
         });
-        await stream.connect(
-            ["process-topic"], 
-            ["process-topic"], 
-            consumerCallback
-        );
-        expect(stream._client.subscribe).toHaveBeenCalledTimes(1);
-        expect(stream._client.on).toHaveBeenCalledTimes(1);
+        //MqttStream._connectClient = jest.fn().mockReturnValue(new MqttMock());
+        await stream.connect();
+        for (const topic of ["process-topic", "process-dynamic-$"]){
+            await stream.setConsumer(topic,consumerCallback);
+            await stream.runConsumer();
+            expect(stream._client.subscribe).toHaveBeenCalled();
+            expect(stream._client.on).toHaveBeenCalled();
+        }
 
-        let result = await stream.produce({
+        await stream.produce({
             "topic":"process-topic", 
             "message":{"mensagem": "This is an test"},
         });
-        expect(stream._client.publish).toHaveBeenCalledTimes(1);
-        expect(result).toEqual(true);
-
-        stream._client.publish = jest.fn(() => { throw new Error("My Error"); });
-        result = await stream.produce({
-            "topic":"process-topic", 
-            "message":{"mensagem": "This is an test"},
+        expect(stream._client.publish).toHaveBeenCalled();
+        await stream.produce({
+            "topic":"process-dynamic-topic", 
+            "message":{"mensagem": "This is an test for dynamic"},
         });
-        expect(result).toEqual(false);
+        expect(stream._client.publish).toHaveBeenCalled();
     
     },);
 },);

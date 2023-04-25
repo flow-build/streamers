@@ -29,24 +29,22 @@ describe('RabbitMQ Stream suite test', () => {
             'RABBITMQ_PASSWORD': 'password',
             'RABBITMQ_QUEUE': 'flowbuild'
         });
-        await stream.connect(
-            ["process-topic"], 
-            ["process-topic"], 
-            consumerCallback
-        );
-
-        let result = await stream.produce({
+        await stream.connect();
+        for (const topic of ["process-topic", "process-dynamic-$"]){
+            await stream.setConsumer(topic,consumerCallback);
+            await stream.runConsumer();
+            expect(stream._client.createChannel).toHaveBeenCalled();
+        }
+        await stream.produce({
             "topic":"process-topic", 
             "message":{"mensagem": "This is an test"},
         });
-        expect(result).toEqual(true);
-
-        stream.createChannel = jest.fn(() => { throw new Error("My Error"); });
-        result = await stream.produce({
-            "topic":"process-topic", 
-            "message":{"mensagem": "This is an test"},
+        expect(stream._client.createChannel).toHaveBeenCalled();
+        await stream.produce({
+            "topic":"process-dynamic-topic", 
+            "message":{"mensagem": "This is an test for dynamic"},
         });
-        expect(result).toEqual(false);
+        expect(stream._client.createChannel).toHaveBeenCalled();
     
     },);
 },);

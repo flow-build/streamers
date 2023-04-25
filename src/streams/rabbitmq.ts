@@ -1,4 +1,4 @@
-import { LooseObject } from '../types';
+import { LooseObject, ProduceParam } from '../types';
 import * as amqplib from "amqplib";
 
 export class RabbitMQStream {
@@ -13,15 +13,25 @@ export class RabbitMQStream {
         };
     }
 
-    async connect(consumesFrom: Array<string>, producesTo: Array<string>, callback: any){
-        console.log('[RabbitMQ CONNECT] Starting connection ...'); 
+    async connect(){
         const url = `amqp://${this._configs.username}:${this._configs.password}@${this._configs.hostname}`;
-        this._client = await amqplib.connect(url);
-        console.log('[RabbitMQ CONNECT] Connected.');
-        await this.setConsumer(consumesFrom, callback);
+        this._client = await RabbitMQStream._connectClient(url);
     }
 
-    async createChannel(topic: string){
+    static async _connectClient(url: string){
+        return await amqplib.connect(url);
+    }
+
+    async setConsumer(topic: string, callback: any, dynamicKey = "$"){
+        const channelCreated = await this._createChannel(topic, dynamicKey);
+        await channelCreated.consume(topic, this.mountConsumerCallback(topic, channelCreated, callback));
+    }
+
+    async runConsumer(){
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    async _createChannel(topic: string, dynamicKey = "$"){
         const channelCreated = await this._client.createChannel();
         await channelCreated.assertQueue(topic, {
             durable: true,
@@ -32,30 +42,13 @@ export class RabbitMQStream {
         return channelCreated;
     }
 
-    async setConsumer(consumesFrom: Array<string>, callback: any){
-        for (const topic of consumesFrom){
-            console.log(`[RabbitMQ CONSUMER] Creating channel for "${topic}"`);
-            const channelCreated = await this.createChannel(topic);
-            await channelCreated.consume(topic, this.mountConsumerCallback(topic, channelCreated, callback));
-            console.log(`[RabbitMQ CONSUMER] Channel for "${topic}" created and running`);
-        }
-    }
-
-    async produce({ topic, message, }: { topic: string; message: LooseObject }){
-        console.log('[RabbitMQ PRODUCE] Publishing message ... ', { topic, message });
-        try {
-            const channelCreated = await this.createChannel(topic);
-            await channelCreated.sendToQueue(
-                topic, 
-                // eslint-disable-next-line no-undef
-                Buffer.from(JSON.stringify(message))
-            );
-            console.log('[RabbitMQ PRODUCE] Message published.');
-            return true;
-        } catch (error) {
-            console.error('[RabbitMQ PRODUCE] Error publishing message.', error);
-            return false;
-        }
+    async produce({ topic, message }: ProduceParam){
+        const channelCreated = await this._createChannel(topic);
+        await channelCreated.sendToQueue(
+            topic, 
+            // eslint-disable-next-line no-undef
+            Buffer.from(JSON.stringify(message))
+        );
     }
 
     mountConsumerCallback(topic: string, channel:any, callback: any){

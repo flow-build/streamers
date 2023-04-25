@@ -4,8 +4,19 @@ async function runBaseSample(){
     const stream = new StreamInterface({
         "topics":{
             "process-topic":{
-                "producesTo":["kafka", "bullmq", "mqtt", "rabbitmq"],
-                "consumesFrom":["kafka", "bullmq", "mqtt", "rabbitmq"],
+                "producesTo":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
+                "consumesFrom":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
+            },
+            "process-topic-second":{
+                "producesTo":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
+                "consumesFrom":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
+            },
+            "trigger_event_$":{
+                "producesTo":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
+                "consumesFrom":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
+            },
+            "trigger_event_xpto":{
+                "consumesFrom":["kafka", 'bullmq', 'mqtt', 'rabbitmq'],
             },
         },
         'kafka': {
@@ -33,7 +44,7 @@ async function runBaseSample(){
             'RABBITMQ_PASSWORD': 'password',
             'RABBITMQ_QUEUE': 'flowbuild'
         }
-    },);
+    });
 
     const consumerCallback = (topic: string, receivedMessage: string) => {
         console.log("** I'm a callback ");
@@ -48,8 +59,78 @@ async function runBaseSample(){
     );
 
     await stream.produce(
-        "process-topic", 
+        "process-topic-second", 
         {"mensagem": "This is another test"},
     );
+
+    await stream.produce(
+        "trigger_event_xpto", 
+        {"mensagem": "This is a test abount trigger event xpto"},
+        {"delay": 5000}
+    );
+
+    /*
+    await stream.produce(
+        "process-states-topic", 
+        {
+            "actor_id": "093eaeaa-daea-11ed-afa1-0242ac120002",
+            "process_data": {
+                "process_id":"25513520-bd31-4d58-9f15-b33d3fdc1ee9", 
+                "workflow_name": "PARENT", 
+                "state": {
+                    "node_id": "node_id",
+                    "next_node_id": "next_node_id",
+                    "result": {},
+                    "status": "finished",
+                    "error": {},
+                    "time_elapsed": 0,
+                }
+            },
+            "visibility":["common"]            
+        },
+    );
+
+    await stream.produce(
+        "orchestrator-start-process-topic", 
+        {
+            "actor": {
+                "id": "0f891818-daea-11ed-afa1-0242ac120002",
+                "roles": ["role"],
+                "iat": 0
+            },
+            "workflow": { 
+                "name": "PARENT"
+            },
+            "process_id":"25513520-bd31-4d58-9f15-b33d3fdc1ee9",           
+        },
+    );
+
+    await stream.produce("orchestrator-result-topic",
+        {
+            result: {},
+            workflow: { 
+                "name": "PARENT"
+            },
+            process_id: "25513520-bd31-4d58-9f15-b33d3fdc1ee9",
+            actor: {
+                "id": "0f891818-daea-11ed-afa1-0242ac120002",
+                "roles": ["role"],
+                "iat": 0
+            },
+        }
+    );
+    
+    await stream.produce("trigger-resolver-topic",{});
+    await stream.produce("start-nodes-topic",{});
+    await stream.produce("finish-nodes-topic",{});
+    await stream.produce("http-nodes-topic",{});
+    await stream.produce("form-request-nodes-topic",{});
+    await stream.produce("flow-nodes-topic",{});
+    await stream.produce("js-script-task-nodes-topic",{});
+    await stream.produce("user-task-nodes-topic",{});
+    await stream.produce("timer-nodes-topic",{});
+    await stream.produce("system-task-nodes-topic",{});
+    await stream.produce("event-nodes-topic",{});*/
+
 }
 runBaseSample();

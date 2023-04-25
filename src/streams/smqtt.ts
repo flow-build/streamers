@@ -1,54 +1,47 @@
-import { LooseObject, } from '../types';
-import { v4 as uuid, } from 'uuid';
+import { LooseObject, ProduceParam } from '../types';
+import { v4 as uuid } from 'uuid';
 import * as mqtt from "mqtt";
 
 
 export class MqttStream {
     _configs: LooseObject;
     _client: any;
+    _callback: any;
 
     constructor(configs: LooseObject) {
-        console.log('[Mqtt CONFIG] Starting configuration ...');
         this._configs = {
             hostname: configs.MQTT_HOST,
             port: configs.MQTT_PORT,
             protocol: configs.MQTT_PROTOCOL || "ws",
             path: configs.MQTT_PATH || "/mqtt",
-            clientId: `configs.CLIENT_ID_${uuid()}`,
+            clientId: `${configs.CLIENT_ID}_${uuid()}`,
             username: configs.MQTT_USERNAME,
             password: configs.MQTT_PASSWORD
         };
-        console.log('[Mqtt CONFIG] configurated.');
     }
 
-    async connect(consumesFrom: Array<string>, producesTo: Array<string>, callback: any){
-        console.log('[Mqtt CONNECT] Starting connection ...'); 
-        this._client = mqtt.connect(this._configs);
-        console.log('[Mqtt CONNECT] Connected.');
-        this.setConsumer(consumesFrom, callback);
+    async connect(){
+        this._client = await MqttStream._connectClient(this._configs);
     }
 
-    async setConsumer(consumesFrom: Array<string>, callback: any){
-        for (const topic of consumesFrom){
-            await this._client.subscribe(topic);
-            console.log(`[Mqtt CONSUMER] Consumer for "${topic}" created.`);
-        }
-        await this._client.on("message", this.mountConsumerCallback(callback));
+    static async _connectClient(configs: LooseObject){
+        return await mqtt.connect(configs);
     }
 
-    async produce({ topic, message, }: { topic: string; message: LooseObject }){
-        console.log('[Mqtt PRODUCE] Publishing message ... ', { topic, message });
-        try {
-            await this._client.publish(
-                topic,
-                JSON.stringify(message),
-            );
-            console.log('[Mqtt PRODUCE] Message published.');
-            return true;
-        } catch (error) {
-            console.error('[Mqtt PRODUCE] Error publishing message.', error);
-            return false;
-        }
+    // eslint-disable-next-line no-unused-vars
+    async setConsumer(topic: string, callback: any, dynamicKey = "$"){
+        this._callback = this.mountConsumerCallback(callback);
+        await this._client.subscribe(topic);
+    }
+
+    async runConsumer(){
+        await this._client.on("message", this._callback);
+    }
+
+    async produce({ topic, message }: ProduceParam){
+        await this._client.publish(
+            topic, JSON.stringify(message),
+        );
     }
 
     mountConsumerCallback(callback: any){
