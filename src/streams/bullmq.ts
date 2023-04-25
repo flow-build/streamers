@@ -60,12 +60,12 @@ export class BullmqStream {
         return queue;
     }
 
-    async produce({ topic, message }: ProduceParam){
+    async produce({ topic, message, options }: ProduceParam){
         let queue = await this.getOrCreateFlowbuildQueue(topic);
         await queue.add(
             topic, 
             JSON.stringify(message), 
-            this._queueConfig,
+            { ...this._queueConfig, ...options },
         );
     }
     
